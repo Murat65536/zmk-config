@@ -2,11 +2,25 @@
  * Copyright (c) 2020 The ZMK Contributors
  *
  * SPDX-License-Identifier: MIT
+ *
+ * Callum's layout (github.com/callum-oakley/qmk_firmware, users/callum),
+ * ported to ZMK on a Colemak-DH base. Differences from the original:
+ *   - Thumbs are SPACE / NAV / SYM / SHIFT (Callum: NAV / SHIFT / SPACE / SYM).
+ *     Backspace lives on NAV (O position), as in Callum's original.
+ *   - One-shot mod order kept as GUI ALT CTRL SHIFT (pinky -> index).
+ *   - macOS shortcuts swapped for Linux / niri equivalents on the nav layer.
+ *   - Bluetooth + bootloader live on a separate adjust layer (NAV + hold the "." key).
  */
 
 #include <behaviors.dtsi>
 #include <dt-bindings/zmk/keys.h>
 #include <dt-bindings/zmk/bt.h>
+
+#define DEF 0
+#define NAV 1
+#define SYM 2
+#define NUM 3
+#define ADJ 4
 
 &sk {
     release-after-ms = <2000>;
@@ -34,20 +48,14 @@
             key-positions = <22 23>;
             bindings = <&kp ENTER>;
         };
-
-        combo_caps_word {
-            timeout-ms = <50>;
-            key-positions = <31 32>;
-            bindings = <&caps_word>;
-        };
     };
 
     conditional_layers {
         compatible = "zmk,conditional-layers";
 
         tri_layer {
-            if-layers = <1 2>;
-            then-layer = <3>;
+            if-layers = <NAV SYM>;
+            then-layer = <NUM>;
         };
     };
 
@@ -56,31 +64,44 @@
 
         default_layer {
             bindings = <
-    &kp Q  &kp W  &kp F  &kp P  &kp B        &kp J  &kp L  &kp U      &kp Y    &kp SEMI
+    &kp Q  &kp W  &kp F  &kp P  &kp B        &kp J  &kp L  &kp U      &kp Y    &kp SQT
     &kp A  &kp R  &kp S  &kp T  &kp G        &kp M  &kp N  &kp E      &kp I    &kp O
-    &kp Z  &kp X  &kp C  &kp D  &kp V        &kp K  &kp H  &kp COMMA  &kp DOT  &kp FSLH
-                        &kp SPACE  &mo 1   &mo 2  &kp BSPC
+    &kp Z  &kp X  &kp C  &kp D  &kp V        &kp K  &kp H  &kp COMMA  &kp DOT  &kp SEMI
+                        &kp SPACE  &mo NAV   &mo SYM  &kp LSHFT
             >;
         };
 
+        // Left: tab, window/tab switching, one-shot mods, workspaces, browser back/fwd, media.
+        // Right: arrows, home/end, page up/down, delete/backspace/enter.
         nav_layer {
             bindings = <
-    &none     &none     &none      &none      &none         &kp PG_UP  &kp HOME  &kp UP    &kp END    &kp DEL
-    &sk LGUI  &sk LALT  &sk LCTRL  &sk LSHFT  &none         &kp PG_DN  &kp LEFT  &kp DOWN  &kp RIGHT  &kp ENTER
-    &none     &none     &none      &none      &none         &none      &none     &none     &none      &none
-                                   &trans     &trans        &trans     &trans
+    &kp TAB        &kp LA(TAB)    &kp LC(LS(TAB))  &kp LC(TAB)   &kp C_VOL_UP        &none        &kp HOME     &kp UP     &kp END    &kp DEL
+    &sk LGUI       &sk LALT       &sk LCTRL        &sk LSHFT     &kp C_VOL_DN        &caps_word   &kp LEFT     &kp DOWN   &kp RIGHT  &kp BSPC
+    &kp LG(PG_UP)  &kp LG(PG_DN)  &kp LA(LEFT)     &kp LA(RIGHT) &kp C_PP            &none        &kp PG_DN    &kp PG_UP  &mo ADJ    &kp ENTER
+                                                   &trans        &trans              &trans       &trans
             >;
         };
 
+        sym_layer {
+            bindings = <
+    &kp ESC    &kp LBKT   &kp LBRC   &kp LPAR   &kp TILDE         &kp CARET  &kp RPAR   &kp RBRC   &kp RBKT   &kp GRAVE
+    &kp MINUS  &kp ASTRK  &kp EQUAL  &kp UNDER  &kp DOLLAR        &kp HASH   &sk RSHFT  &sk RCTRL  &sk RALT   &sk RGUI
+    &kp PLUS   &kp PIPE   &kp AT     &kp FSLH   &kp PRCNT         &none      &kp BSLH   &kp AMPS   &kp QMARK  &kp EXCL
+                                     &trans     &trans            &trans     &trans
+            >;
+        };
+
+        // Hold NAV + SYM together.
         num_layer {
             bindings = <
-    &kp LBKT   &kp N7  &kp N8  &kp N9  &kp RBKT         &none  &none      &none      &none     &none
-    &kp SQT    &kp N4  &kp N5  &kp N6  &kp EQUAL        &none  &sk RSHFT  &sk RCTRL  &sk RALT  &sk RGUI
-    &kp GRAVE  &kp N1  &kp N2  &kp N3  &kp MINUS        &none  &none      &none      &none     &none
-                               &kp N0  &trans           &trans &trans
+    &kp N7    &kp N5    &kp N3     &kp N1     &kp N9            &kp N8   &kp N0     &kp N2     &kp N4    &kp N6
+    &sk LGUI  &sk LALT  &sk LCTRL  &sk LSHFT  &kp F11           &kp F10  &sk RSHFT  &sk RCTRL  &sk RALT  &sk RGUI
+    &kp F7    &kp F5    &kp F3     &kp F1     &kp F9            &kp F8   &kp F12    &kp F2     &kp F4    &kp F6
+                                   &trans     &trans            &trans   &trans
             >;
         };
 
+        // Hold NAV, then hold the "." key position.
         adjust_layer {
             bindings = <
     &bt BT_CLR  &bt BT_SEL 0  &bt BT_SEL 1  &bt BT_SEL 2  &none         &none  &none  &none  &none  &bootloader
